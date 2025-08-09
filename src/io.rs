@@ -4,22 +4,28 @@ pub struct Image {
     pub height: u32,
     pub channels: u32,
     pub array: Vec<f32>,
+    zero_pixel: Vec<f32>,
 }
 
 impl Image {
-    pub fn get_pixel(&self, x: u32, y: u32) -> Vec<f32> {
-        if x >= self.width || y >= self.height {
+    pub fn new(width: u32, height: u32, channels: u32, array: Vec<f32>) -> Self {
+        Self {
+            width,
+            height,
+            channels,
+            array,
+            zero_pixel: vec![0.0; channels as usize],
+        }
+    }
+    pub fn get_pixel(&self, x: i32, y: i32) -> &[f32] {
+        if x >= self.width as i32 || y >= self.height as i32 || x < 0 || y < 0 {
             // Return zeroed pixel if out of bounds
-            return vec![0.0, 0.0, 0.0];
+            return &self.zero_pixel;
         }
 
-        let index_r = ((y * self.width + x) * self.channels) as usize;
+        let index = ((y * self.width as i32 + x) * self.channels as i32) as usize;
 
-        let pixel = (0..self.channels)
-            .map(|c| self.array[index_r + c as usize])
-            .collect();
-
-        pixel
+        &self.array[index..index + self.channels as usize]
     }
     pub fn put_pixel(&mut self, x: u32, y: u32, pixel: Vec<f32>) -> bool {
         if x >= self.width || y >= self.height || pixel.len() != self.channels as usize {
@@ -42,6 +48,7 @@ impl Image {
             width,
             channels,
             array,
+            ..
         } = self;
         if channels != 3 && channels != 1 {
             return Err("Array must have 3 channels or 1 channel  for RGB or grayscale".into());
@@ -86,10 +93,5 @@ pub fn read_image(path: &str) -> Result<Image, Box<dyn std::error::Error>> {
         }
     };
 
-    Ok(Image {
-        width,
-        height,
-        channels,
-        array: converted,
-    })
+    Ok(Image::new(width, height, channels, converted))
 }

@@ -5,15 +5,10 @@ pub fn l1_norm(mut img: Image) -> Image {
     img.array.iter_mut().for_each(|x| *x /= sum);
     img
 }
-
+//12.43s
 pub fn make_box_filter(w: u32) -> Image {
     let px_value: f32 = 1.0 / ((w * w) as f32);
-    return Image {
-        channels: 1,
-        height: w,
-        width: w,
-        array: vec![px_value; (w * w) as usize],
-    };
+    Image::new(w, w, 1, vec![px_value; (w * w) as usize])
 }
 
 //preserve to preserve input output channels
@@ -42,14 +37,14 @@ pub fn convolve_image(img: Image, filter: Image, preserve: bool) -> Image {
                     let img_y = y as i32 + fy as i32 - pad_top as i32;
                     let img_x = x as i32 + fx as i32 - pad_left as i32;
                     let pixel = img.get_pixel(img_x, img_y);
-                    let filter_pix = if filter.channels == 1 {
-                        vec![filter.get_pixel(fx as i32, fy as i32)[0]; img.channels as usize]
-                    } else {
-                        filter.get_pixel(fx as i32, fy as i32)
-                    };
 
                     for chan in 0..(img.channels as usize) {
-                        sum[chan] += filter_pix[chan] * pixel[chan];
+                        let filter_pix = if filter.channels == 1 {
+                            filter.get_pixel(fx as i32, fy as i32)[0]
+                        } else {
+                            filter.get_pixel(fx as i32, fy as i32)[chan]
+                        };
+                        sum[chan] += filter_pix * pixel[chan];
                     }
                 }
             }
@@ -60,11 +55,10 @@ pub fn convolve_image(img: Image, filter: Image, preserve: bool) -> Image {
             }
         }
     }
-
-    Image {
-        array: new_array,
-        width: img.width,
-        height: img.height,
-        channels: if preserve { img.channels } else { 1 },
-    }
+    Image::new(
+        img.width,
+        img.height,
+        if preserve { img.channels } else { 1 },
+        new_array,
+    )
 }

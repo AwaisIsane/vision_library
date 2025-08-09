@@ -20,12 +20,7 @@ pub fn resize_image_nearest_neighbour(img: Image, to_width: u32, to_height: u32)
             new_img.extend(pixel);
         }
     }
-    Image {
-        width: to_width,
-        height: to_height,
-        channels: img.channels,
-        array: new_img,
-    }
+    Image::new(to_width, to_height, img.channels, new_img)
 }
 
 pub fn bilinear_resize(img: Image, to_width: u32, to_height: u32) -> Image {
@@ -68,12 +63,7 @@ pub fn bilinear_resize(img: Image, to_width: u32, to_height: u32) -> Image {
             new_img.extend(pixel);
         }
     }
-    Image {
-        width: to_width,
-        height: to_height,
-        channels: img.channels,
-        array: new_img,
-    }
+    Image::new(to_width, to_height, img.channels, new_img)
 }
 
 pub fn shift_image(mut img: Image, channel: u32, shift_by: f32) -> Image {
@@ -82,7 +72,7 @@ pub fn shift_image(mut img: Image, channel: u32, shift_by: f32) -> Image {
     }
     for y_i in 0..img.height {
         for x_i in 0..img.width {
-            let mut pixel = img.get_pixel(x_i as i32, y_i as i32);
+            let mut pixel = img.get_pixel(x_i as i32, y_i as i32).to_vec();
             pixel[channel as usize] += shift_by;
             img.put_pixel(x_i, y_i, pixel);
         }
@@ -96,7 +86,7 @@ pub fn scale_image(mut img: Image, channel: u32, scale_by: f32) -> Image {
     }
     for y_i in 0..img.height {
         for x_i in 0..img.width {
-            let mut pixel = img.get_pixel(x_i as i32, y_i as i32);
+            let mut pixel = img.get_pixel(x_i as i32, y_i as i32).to_vec();
             pixel[channel as usize] *= scale_by;
             img.put_pixel(x_i, y_i, pixel);
         }

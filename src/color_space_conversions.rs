@@ -190,10 +190,5 @@ pub fn rgb_to_grayscale(img: Image) -> Image {
             grayscale.push(luma);
         }
     }
-    Image {
-        array: grayscale,
-        height: img.height,
-        width: img.width,
-        channels: 1,
-    }
+    Image::new(img.width, img.height, 1, grayscale)
 }
