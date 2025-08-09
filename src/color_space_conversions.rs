@@ -3,7 +3,7 @@ use crate::io::Image;
 pub fn rgb_to_hsv(mut img: Image) -> Image {
     for y_i in 0..img.height {
         for x_i in 0..img.width {
-            let pixel = img.get_pixel(x_i, y_i);
+            let pixel = img.get_pixel(x_i as i32, y_i as i32);
             let v = pixel[0].max(pixel[1]).max(pixel[2]);
             let m = pixel[0].min(pixel[1]).min(pixel[2]);
             let c = v - m;
@@ -32,7 +32,7 @@ pub fn rgb_to_hsv(mut img: Image) -> Image {
 pub fn hsv_to_rgb(mut img: Image) -> Image {
     for y_i in 0..img.height {
         for x_i in 0..img.width {
-            let pixel = img.get_pixel(x_i, y_i);
+            let pixel = img.get_pixel(x_i as i32, y_i as i32);
             let [h, s, v] = [pixel[0], pixel[1], pixel[2]];
             let c = v * s;
             let x = c * (1.0 - ((h * 6.0) % 2.0 - 1.0).abs());
@@ -57,7 +57,7 @@ pub fn rgb_to_hcl(mut img: Image) -> Image {
 
     for y_i in 0..img.height {
         for x_i in 0..img.width {
-            let pixel = img.get_pixel(x_i, y_i);
+            let pixel = img.get_pixel(x_i as i32, y_i as i32);
             let [r, g, b] = [pixel[0], pixel[1], pixel[2]];
 
             //sRGB => CIEXYZ
@@ -118,7 +118,7 @@ pub fn rgb_to_hcl(mut img: Image) -> Image {
 pub fn hcl_to_rgb(mut img: Image) -> Image {
     for y_i in 0..img.height {
         for x_i in 0..img.width {
-            let pixel = img.get_pixel(x_i, y_i);
+            let pixel = img.get_pixel(x_i as i32, y_i as i32);
             let h = pixel[0];
             let c = pixel[1];
             let l = pixel[2];
@@ -185,7 +185,7 @@ pub fn rgb_to_grayscale(img: Image) -> Image {
 
     for y in 0..img.height {
         for x in 0..img.width {
-            let pixel = img.get_pixel(x, y);
+            let pixel = img.get_pixel(x as i32, y as i32);
             let luma = 0.299 * pixel[0] + 0.587 * pixel[1] + 0.114 * pixel[2];
             grayscale.push(luma);
         }

@@ -10,8 +10,8 @@ pub fn resize_image_nearest_neighbour(img: Image, to_width: u32, to_height: u32)
         for x in 0..to_width {
             // let src_x = ((x as f32 * width_ratio).floor() as u32).min(width - 1);
             // let src_y = ((y as f32 * height_ratio).floor() as u32).min(height - 1);
-            let src_x = (x as f32 * width_ratio).floor() as u32;
-            let src_y = (y as f32 * height_ratio).floor() as u32;
+            let src_x = (x as f32 * width_ratio).floor() as i32;
+            let src_y = (y as f32 * height_ratio).floor() as i32;
 
             // Get the pixel from the source image
             let pixel = img.get_pixel(src_x, src_y);
@@ -41,11 +41,11 @@ pub fn bilinear_resize(img: Image, to_width: u32, to_height: u32) -> Image {
             let src_x = x as f32 * width_ratio;
             let src_y = y as f32 * height_ratio;
 
-            let x_floor = src_x.floor() as u32;
-            let y_floor = src_y.floor() as u32;
+            let x_floor = src_x.floor() as i32;
+            let y_floor = src_y.floor() as i32;
 
-            let x_ceil = (src_x.ceil() as u32).min(img.width - 1);
-            let y_ceil = (src_y.ceil() as u32).min(img.height - 1);
+            let x_ceil = (src_x.ceil() as i32).min(img.width as i32 - 1);
+            let y_ceil = (src_y.ceil() as i32).min(img.height as i32 - 1);
 
             // Get the pixel from the source image
             let v1 = img.get_pixel(x_floor, y_floor);
@@ -82,7 +82,7 @@ pub fn shift_image(mut img: Image, channel: u32, shift_by: f32) -> Image {
     }
     for y_i in 0..img.height {
         for x_i in 0..img.width {
-            let mut pixel = img.get_pixel(x_i, y_i);
+            let mut pixel = img.get_pixel(x_i as i32, y_i as i32);
             pixel[channel as usize] += shift_by;
             img.put_pixel(x_i, y_i, pixel);
         }
@@ -96,7 +96,7 @@ pub fn scale_image(mut img: Image, channel: u32, scale_by: f32) -> Image {
     }
     for y_i in 0..img.height {
         for x_i in 0..img.width {
-            let mut pixel = img.get_pixel(x_i, y_i);
+            let mut pixel = img.get_pixel(x_i as i32, y_i as i32);
             pixel[channel as usize] *= scale_by;
             img.put_pixel(x_i, y_i, pixel);
         }
