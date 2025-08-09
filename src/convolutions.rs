@@ -5,7 +5,6 @@ pub fn l1_norm(mut img: Image) -> Image {
     img.array.iter_mut().for_each(|x| *x /= sum);
     img
 }
-//12.43s
 pub fn make_box_filter(w: u32) -> Image {
     let px_value: f32 = 1.0 / ((w * w) as f32);
     Image::new(w, w, 1, vec![px_value; (w * w) as usize])
