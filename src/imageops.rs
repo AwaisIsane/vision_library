@@ -93,3 +93,39 @@ pub fn scale_image(mut img: Image, channel: u32, scale_by: f32) -> Image {
     }
     img
 }
+
+pub fn add_image(img1: Image, img2: Image) -> Image {
+    if img1.channels != img2.channels || img1.height != img2.height || img1.width != img2.width {
+        panic!("dimesnsions not same")
+    }
+    let mut new_image = vec![];
+    for y_i in 0..img1.height {
+        for x_i in 0..img1.width {
+            let pixel1 = img1.get_pixel(x_i as i32, y_i as i32);
+            let pixel2 = img2.get_pixel(x_i as i32, y_i as i32);
+
+            for c in 0..img1.channels as usize {
+                new_image.push(pixel1[c] + pixel2[c]);
+            }
+        }
+    }
+    Image::new(img1.width, img1.height, img1.channels, new_image)
+}
+
+pub fn sub_image(img1: Image, img2: Image) -> Image {
+    if img1.channels != img2.channels || img1.height != img2.height || img1.width != img2.width {
+        panic!("dimesnsions not same")
+    }
+    let mut new_image = vec![];
+    for y_i in 0..img1.height {
+        for x_i in 0..img1.width {
+            let pixel1 = img1.get_pixel(x_i as i32, y_i as i32);
+            let pixel2 = img2.get_pixel(x_i as i32, y_i as i32);
+
+            for c in 0..img1.channels as usize {
+                new_image.push(pixel1[c] - pixel2[c]);
+            }
+        }
+    }
+    Image::new(img1.width, img1.height, img1.channels, new_image)
+}

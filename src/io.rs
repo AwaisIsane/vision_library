@@ -1,4 +1,5 @@
 use image::{DynamicImage, GenericImageView, ImageBuffer, Luma, Rgb};
+#[derive(Clone)]
 pub struct Image {
     pub width: u32,
     pub height: u32,
@@ -86,7 +87,7 @@ pub fn read_image(path: &str) -> Result<Image, Box<dyn std::error::Error>> {
             (img.to_rgb32f().into_raw(), 3)
         }
         image::ColorType::Rgba8 | image::ColorType::Rgba16 | image::ColorType::Rgba32F => {
-            (img.to_rgba32f().into_raw(), 4)
+            (img.to_rgb32f().into_raw(), 3)
         }
         other => {
             return Err(format!("Unsupported color type: {:?}", other).into());
