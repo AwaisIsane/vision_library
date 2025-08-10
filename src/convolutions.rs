@@ -1,4 +1,6 @@
-use crate::io::Image;
+use std::f32::consts::PI;
+
+use crate::{color_space_conversions::hsv_to_rgb, io::Image};
 
 pub fn l1_norm(mut img: Image) -> Image {
     let sum: f32 = img.array.iter().sum();
@@ -151,4 +153,24 @@ pub fn sobel_image(img: Image) -> (Image, Image) {
         Image::new(imgx.width, imgx.height, imgx.channels, magnitude),
         Image::new(imgx.width, imgx.height, imgx.channels, direction),
     )
+}
+
+pub fn colorize_sobel(img: Image) -> Image {
+    let mut new_img = vec![];
+    let img = convolve_image(img, make_gaussian_filter(1.0), true);
+    let (magnitude, direction) = sobel_image(img);
+    let magnitude = feature_norm(magnitude);
+
+    for y_i in 0..magnitude.height {
+        for x_i in 0..magnitude.width {
+            let direction_pix = direction.get_pixel(x_i as i32, y_i as i32);
+            let magnitude_pix = magnitude.get_pixel(x_i as i32, y_i as i32);
+            for c in 0..magnitude.channels as usize {
+                new_img.push((direction_pix[c] / (2.0 * PI)) + 0.7); // Direct conversion from radians to 0-1;
+                new_img.push(magnitude_pix[c]);
+                new_img.push(magnitude_pix[c]);
+            }
+        }
+    }
+    hsv_to_rgb(Image::new(magnitude.width, magnitude.height, 3, new_img))
 }
