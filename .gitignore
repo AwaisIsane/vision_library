@@ -1,3 +1,6 @@
 /target
 *jpg
 src/main.rs
+.continue
+.clineignore
+.vscode

@@ -1,39 +1,59 @@
 use crate::io::Image;
+use rayon::prelude::*;
 
 pub fn rgb_to_hsv(mut img: Image) -> Image {
-    for y_i in 0..img.height {
-        for x_i in 0..img.width {
-            let pixel = img.get_pixel(x_i as i32, y_i as i32);
-            let v = pixel[0].max(pixel[1]).max(pixel[2]);
-            let m = pixel[0].min(pixel[1]).min(pixel[2]);
+    let width = img.width;
+    let height = img.height;
+    let channels = img.channels;
+
+    img.array
+        .par_chunks_mut(channels as usize)
+        .enumerate()
+        .for_each(|(i, pixel_ref)| {
+            let x_i = (i as u32) % width;
+            let y_i = (i as u32) / width;
+
+            // Use the pixel_ref directly, it's already mutable and in bounds
+            let v = pixel_ref[0].max(pixel_ref[1]).max(pixel_ref[2]);
+            let m = pixel_ref[0].min(pixel_ref[1]).min(pixel_ref[2]);
             let c = v - m;
             let s = if v != 0.0 { c / v } else { 0.0 };
             let h_c = if c == 0.0 {
                 0.0
-            } else if v == pixel[0] {
-                (pixel[1] - pixel[2]) / c
-            } else if v == pixel[1] {
-                (pixel[2] - pixel[0]) / c + 2.0
+            } else if v == pixel_ref[0] {
+                (pixel_ref[1] - pixel_ref[2]) / c
+            } else if v == pixel_ref[1] {
+                (pixel_ref[2] - pixel_ref[0]) / c + 2.0
             } else {
-                (pixel[0] - pixel[1]) / c + 4.0
+                (pixel_ref[0] - pixel_ref[1]) / c + 4.0
             };
             let h = if h_c < 0.0 {
                 h_c / 6.0 + 1.0
             } else {
                 h_c / 6.0
             };
-            img.put_pixel(x_i, y_i, vec![h, s, v]);
-        }
-    }
+
+            pixel_ref[0] = h;
+            pixel_ref[1] = s;
+            pixel_ref[2] = v;
+        });
 
     img
 }
 
 pub fn hsv_to_rgb(mut img: Image) -> Image {
-    for y_i in 0..img.height {
-        for x_i in 0..img.width {
-            let pixel = img.get_pixel(x_i as i32, y_i as i32);
-            let [h, s, v] = [pixel[0], pixel[1], pixel[2]];
+    let width = img.width;
+    let height = img.height;
+    let channels = img.channels;
+
+    img.array
+        .par_chunks_mut(channels as usize)
+        .enumerate()
+        .for_each(|(i, pixel_ref)| {
+            let x_i = (i as u32) % width;
+            let y_i = (i as u32) / width;
+
+            let [h, s, v] = [pixel_ref[0], pixel_ref[1], pixel_ref[2]];
             let c = v * s;
             let x = c * (1.0 - ((h * 6.0) % 2.0 - 1.0).abs());
             let m = v - c;
@@ -46,19 +66,27 @@ pub fn hsv_to_rgb(mut img: Image) -> Image {
                 4 => (x, 0.0, c),
                 _ => (c, 0.0, x),
             };
-            img.put_pixel(x_i, y_i, vec![r + m, g + m, b + m]);
-        }
-    }
+            pixel_ref[0] = r + m;
+            pixel_ref[1] = g + m;
+            pixel_ref[2] = b + m;
+        });
     img
 }
 
 pub fn rgb_to_hcl(mut img: Image) -> Image {
     //https://www.easyrgb.com/en/math.php
+    let width = img.width;
+    let height = img.height;
+    let channels = img.channels;
 
-    for y_i in 0..img.height {
-        for x_i in 0..img.width {
-            let pixel = img.get_pixel(x_i as i32, y_i as i32);
-            let [r, g, b] = [pixel[0], pixel[1], pixel[2]];
+    img.array
+        .par_chunks_mut(channels as usize)
+        .enumerate()
+        .for_each(|(i, pixel_ref)| {
+            let x_i = (i as u32) % width;
+            let y_i = (i as u32) / width;
+
+            let [r, g, b] = [pixel_ref[0], pixel_ref[1], pixel_ref[2]];
 
             //sRGB => CIEXYZ
             let r = if r > 0.04045 {
@@ -109,19 +137,28 @@ pub fn rgb_to_hcl(mut img: Image) -> Image {
             let c = u.hypot(v);
             let h = v.atan2(u);
 
-            img.put_pixel(x_i, y_i, vec![h, c, l]);
-        }
-    }
+            pixel_ref[0] = h;
+            pixel_ref[1] = c;
+            pixel_ref[2] = l;
+        });
     img
 }
 
 pub fn hcl_to_rgb(mut img: Image) -> Image {
-    for y_i in 0..img.height {
-        for x_i in 0..img.width {
-            let pixel = img.get_pixel(x_i as i32, y_i as i32);
-            let h = pixel[0];
-            let c = pixel[1];
-            let l = pixel[2];
+    let width = img.width;
+    let height = img.height;
+    let channels = img.channels;
+
+    img.array
+        .par_chunks_mut(channels as usize)
+        .enumerate()
+        .for_each(|(i, pixel_ref)| {
+            let x_i = (i as u32) % width;
+            let y_i = (i as u32) / width;
+
+            let h = pixel_ref[0];
+            let c = pixel_ref[1];
+            let l = pixel_ref[2];
 
             // HCL to LUV
             let u = c * h.cos();
@@ -172,23 +209,24 @@ pub fn hcl_to_rgb(mut img: Image) -> Image {
                 12.92 * b
             };
 
-            // Clamp and convert to f32
-            img.put_pixel(x_i, y_i, vec![r, g, b]);
-        }
-    }
+            pixel_ref[0] = r;
+            pixel_ref[1] = g;
+            pixel_ref[2] = b;
+        });
 
     img
 }
 
 pub fn rgb_to_grayscale(img: Image) -> Image {
-    let mut grayscale = vec![];
+    let width = img.width;
+    let height = img.height;
+    let channels = img.channels;
 
-    for y in 0..img.height {
-        for x in 0..img.width {
-            let pixel = img.get_pixel(x as i32, y as i32);
-            let luma = 0.299 * pixel[0] + 0.587 * pixel[1] + 0.114 * pixel[2];
-            grayscale.push(luma);
-        }
-    }
-    Image::new(img.width, img.height, 1, grayscale)
+    let grayscale_array: Vec<f32> = img
+        .array
+        .par_chunks(channels as usize)
+        .map(|pixel| 0.299 * pixel[0] + 0.587 * pixel[1] + 0.114 * pixel[2])
+        .collect();
+
+    Image::new(width, height, 1, grayscale_array)
 }

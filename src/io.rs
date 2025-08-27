@@ -18,28 +18,58 @@ impl Image {
             zero_pixel: vec![0.0; channels as usize],
         }
     }
+    /// Returns a slice to the pixel data at (x, y). Returns a zeroed pixel if out of bounds.
+    #[inline]
     pub fn get_pixel(&self, x: i32, y: i32) -> &[f32] {
         if x >= self.width as i32 || y >= self.height as i32 || x < 0 || y < 0 {
-            // Return zeroed pixel if out of bounds
-            return &self.zero_pixel;
+            &self.zero_pixel
+        } else {
+            let index = ((y * self.width as i32 + x) * self.channels as i32) as usize;
+            &self.array[index..index + self.channels as usize]
         }
-
-        let index = ((y * self.width as i32 + x) * self.channels as i32) as usize;
-
-        &self.array[index..index + self.channels as usize]
     }
-    pub fn put_pixel(&mut self, x: u32, y: u32, pixel: Vec<f32>) -> bool {
+
+    /// Returns a mutable slice to the pixel data at (x, y). Returns `None` if out of bounds.
+    #[inline]
+    pub fn get_pixel_mut(&mut self, x: u32, y: u32) -> Option<&mut [f32]> {
+        if x >= self.width || y >= self.height {
+            None
+        } else {
+            let index = ((y * self.width + x) * self.channels) as usize;
+            Some(&mut self.array[index..index + self.channels as usize])
+        }
+    }
+
+    /// Puts a pixel at (x, y) from a slice. Returns `false` if out of bounds or pixel length mismatch.
+    #[inline]
+    pub fn put_pixel(&mut self, x: u32, y: u32, pixel: &[f32]) -> bool {
         if x >= self.width || y >= self.height || pixel.len() != self.channels as usize {
             return false;
         }
 
-        let index_r = ((y * self.width + x) * self.channels) as usize;
-
-        for c in 0..self.channels {
-            self.array[index_r + c as usize] = pixel[c as usize];
-        }
-
+        let index = ((y * self.width + x) * self.channels) as usize;
+        self.array[index..index + self.channels as usize].copy_from_slice(pixel);
         true
+    }
+
+    /// Unsafe version of `get_pixel` without bounds checks.
+    /// # Safety
+    /// Caller must ensure `x` and `y` are within image bounds.
+    #[inline]
+    pub unsafe fn get_pixel_unchecked(&self, x: u32, y: u32) -> &[f32] {
+        let index = ((y * self.width + x) * self.channels) as usize;
+        self.array
+            .get_unchecked(index..index + self.channels as usize)
+    }
+
+    /// Unsafe version of `get_pixel_mut` without bounds checks.
+    /// # Safety
+    /// Caller must ensure `x` and `y` are within image bounds.
+    #[inline]
+    pub unsafe fn get_pixel_unchecked_mut(&mut self, x: u32, y: u32) -> &mut [f32] {
+        let index = ((y * self.width + x) * self.channels) as usize;
+        self.array
+            .get_unchecked_mut(index..index + self.channels as usize)
     }
 
     // Write RGB Array3<f32> to JPEG file
