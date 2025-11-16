@@ -18,14 +18,12 @@ impl Image {
             zero_pixel: vec![0.0; channels as usize],
         }
     }
+
     pub fn get_pixel(&self, x: i32, y: i32) -> &[f32] {
-        if x >= self.width as i32 || y >= self.height as i32 || x < 0 || y < 0 {
-            // Return zeroed pixel if out of bounds
-            return &self.zero_pixel;
-        }
+        let xx = x.clamp(0, self.width as i32 - 1);
+        let yy = y.clamp(0, self.height as i32 - 1);
 
-        let index = ((y * self.width as i32 + x) * self.channels as i32) as usize;
-
+        let index = ((yy * self.width as i32 + xx) * self.channels as i32) as usize;
         &self.array[index..index + self.channels as usize]
     }
     pub fn put_pixel(&mut self, x: u32, y: u32, pixel: Vec<f32>) -> bool {
@@ -95,4 +93,58 @@ pub fn read_image(path: &str) -> Result<Image, Box<dyn std::error::Error>> {
     };
 
     Ok(Image::new(width, height, channels, converted))
+}
+
+/// Draws a + sign at each point in `points` on the image.
+/// If `value` is None, it defaults to red for RGB/RGBA and black for grayscale/luma.
+pub fn draw_plus_on_image(
+    img: &mut Image,
+    points: &[(u32, u32)],
+    size: u32,
+    value: Option<&[f32]>,
+) {
+    let width = img.width as i32;
+    let height = img.height as i32;
+    let channels = img.channels as usize;
+
+    // Determine the color to use
+    let default_value: Vec<f32> = match value {
+        Some(v) => {
+            assert_eq!(
+                v.len(),
+                channels,
+                "Value array length must match image channels"
+            );
+            v.to_vec()
+        }
+        None => {
+            match channels {
+                1 => vec![0.0],                    // black for grayscale
+                3 => vec![255.0, 0.0, 0.0],        // red for RGB
+                4 => vec![255.0, 0.0, 0.0, 255.0], // red + full alpha for RGBA
+                _ => vec![255.0; channels],        // fallback: white for other channels
+            }
+        }
+    };
+
+    for &(x, y) in points {
+        let x = x as i32;
+        let y = y as i32;
+
+        // Horizontal line
+        for dx in -(size as i32)..=(size as i32) {
+            let nx = x + dx;
+            if nx >= 0 && nx < width && y >= 0 && y < height {
+                img.put_pixel(nx as u32, y as u32, default_value.clone());
+            }
+        }
+
+        // Vertical line
+        for dy in -(size as i32)..=(size as i32) {
+            let ny = y + dy;
+            if ny >= 0 && ny < height && x >= 0 && x < width {
+                img.put_pixel(x as u32, ny as u32, default_value.clone());
+            }
+        }
+    }
 }

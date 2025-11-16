@@ -1,3 +1,4 @@
 /target
 *jpg
+*png
 src/main.rs
